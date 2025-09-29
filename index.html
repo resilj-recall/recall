@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vehicle Document Search</title>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    select, input, button { margin: 5px; padding: 5px; }
+    .result { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Vehicle Document Search</h1>
+
+  <label>Make: <select id="make"></select></label>
+  <label>Model: <select id="model"></select></label>
+  <label>Year: <select id="year"></select></label>
+  <br>
+  <label>VIN: <input id="vin" placeholder="Enter VIN"></label>
+  <button onclick="search()">Search</button>
+
+  <div id="results" class="result"></div>
+
+  <script>
+    let vehicles = [];
+    let fuse;
+
+    async function init() {
+      const res = await fetch('data.json');
+      vehicles = await res.json();
+
+      // Populate dropdowns
+      const makes = [...new Set(vehicles.map(v => v.make))];
+      const makeSelect = document.getElementById('make');
+      makeSelect.innerHTML = '<option value="">--Any--</option>' + makes.map(m => `<option>${m}</option>`).join('');
+
+      makeSelect.addEventListener('change', updateModels);
+      document.getElementById('model').addEventListener('change', updateYears);
+
+      // Setup Fuse.js for fuzzy VIN search
+      fuse = new Fuse(vehicles, { keys: ['vin'], threshold: 0.3 });
+    }
+
+    function updateModels() {
+      const make = document.getElementById('make').value;
+      const models = [...new Set(vehicles.filter(v => !make || v.make === make).map(v => v.model))];
+      document.getElementById('model').innerHTML = '<option value="">--Any--</option>' + models.map(m => `<option>${m}</option>`).join('');
+      updateYears();
+    }
+
+    function updateYears() {
+      const make = document.getElementById('make').value;
+      const model = document.getElementById('model').value;
+      const years = [...new Set(vehicles.filter(v => (!make || v.make === make) && (!model || v.model === model)).map(v => v.year))];
+      document.getElementById('year').innerHTML = '<option value="">--Any--</option>' + years.map(y => `<option>${y}</option>`).join('');
+    }
+
+    function search() {
+      const make = document.getElementById('make').value;
+      const model = document.getElementById('model').value;
+      const year = document.getElementById('year').value;
+      const vin = document.getElementById('vin').value.trim();
+
+      let results = [];
+
+      if (vin) {
+        results = fuse.search(vin).map(r => r.item);
+      } else {
+        results = vehicles.filter(v =>
+          (!make || v.make === make) &&
+          (!model || v.model === model) &&
+          (!year || v.year === year)
+        );
+      }
+
+      const container = document.getElementById('results');
+      container.innerHTML = results.length
+        ? results.map(r => `
+            <p><b>${r.year} ${r.make} ${r.model}</b><br>
+            VIN: ${r.vin}<br>
+            Documents: ${r.docs.map(d => `<a href="${d}" target="_blank">${d.split('/').pop()}</a>`).join(', ')}
+            </p>`).join('')
+        : "<p>No documents found.</p>";
+    }
+
+    init();
+  </script>
+</body>
+</html>
