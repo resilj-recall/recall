@@ -1,0 +1,16 @@
+[
+  {
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2018",
+    "vin": "4T1BF1FK5JU123456",
+    "docs": ["docs/toyota_camry_2018_manual.pdf", "docs/toyota_camry_2018_specs.pdf"]
+  },
+  {
+    "make": "Ford",
+    "model": "F-150",
+    "year": "2020",
+    "vin": "1FTFW1E50LFA12345",
+    "docs": ["docs/ford_f150_2020_manual.pdf"]
+  }
+]
